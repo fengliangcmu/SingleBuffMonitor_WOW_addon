@@ -31,19 +31,6 @@ BuffMonitorAddon.frame = nil
 
 local function MyAddonCommands(msg, editbox)
 
-    -- local _, _, cmd, args = string.find(msg, "%s?(%w+)%s?(.*)")
-    -- print(cmd .. " : " .. args)
-    -- if cmd == "add" and args ~= "" then
-    --   print("adding " .. args)
-    --   -- Handle adding of the contents of rest... to something.
-    -- elseif cmd == "remove" and args ~= "" then
-    --   print("removing " .. args)
-    --   -- Handle removing of the contents of rest... to something.   
-    -- else
-    --   -- If not handled above, display some sort of help message
-    --   print("Syntax Example: /buffmonitor (show | hide | resize 50 50) ");
-    -- end
-
     local args = {};
 	for _, arg in ipairs({ string.split(' ', msg) }) do
 		if (#arg > 0) then
@@ -123,7 +110,7 @@ local function initializeFrame()
             -- print("leaving combat")
             self:SetAlpha(0.5)
             self.count:SetText("")
-            self.cooldown:Hide()
+            -- self.cooldown:Hide() no need to hide, as cooldown may still exist.
         end
     end)
 
