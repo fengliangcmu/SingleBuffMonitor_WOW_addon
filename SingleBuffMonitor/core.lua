@@ -1,47 +1,57 @@
 --[[
-	Single Buff Monitor, by default for hunter pet's frenzy buff
-	Copyright (c) 2018, stephen Liang
-	All rights reserved.
+    Single Buff Monitor, by default for hunter pet's frenzy buff
+    Copyright (c) 2018, stephen Liang
+    All rights reserved.
 ]]
 
 ----------------------------------------------------
 -- Initializing Addon 
 ----------------------------------------------------
-
 BuffMonitorAddon = {}
-BuffMonitorAddon.spell_id = 272790
-
--- BuffMonitorAddon.spell_name = spell_name
--- BuffMonitorAddon.spell_icon = spell_icon
 
 -- pet by default but can be set to player, focus, target or more : https://wow.gamepedia.com/UnitId
-BuffMonitorAddon.targetToMonitor = "pet"  
+BuffMonitorAddon.targetToMonitor = "pet"
+BuffMonitorAddon.spell_id = 272790  
 BuffMonitorAddon.frameWidth = 50
 BuffMonitorAddon.frameHeight = 50
+BuffMonitorAddon.stackCountFontSize = 25
+BuffMonitorAddon.anchor = "CENTER"
+BuffMonitorAddon.anchorOX = 0
+BuffMonitorAddon.anchorOY = 0
+
+BuffMonitorAddon.defaultTargetToMonitor = "pet"  
+BuffMonitorAddon.defaultSpell_id = 272790
 BuffMonitorAddon.defaultFrameWidth = 50
 BuffMonitorAddon.defaultFrameHeight = 50
-BuffMonitorAddon.stackCountFontSize = 25
 BuffMonitorAddon.stackCountDefaultFontSize = 25
+BuffMonitorAddon.defaultAnchor = "CENTER"
+BuffMonitorAddon.defaultAnchorOX = 0
+BuffMonitorAddon.defaultAnchorOY = 0
+
 BuffMonitorAddon.stackCountFont = "Fonts\\FRIZQT__.TTF"
 BuffMonitorAddon.frame = nil
 
 ----------------------------------------------------
 -- Handling Command Line 
 ----------------------------------------------------
+local function printCmdTips()
+    print("Welcome to use |cff00cc66 [Single Buff Monitor] |r")
+    print("|cff00cc66 [Single Buff Monitor] command examples: |r")
+    print("|cff00cc66 show : |r /sbmonitor show")
+    print("|cff00cc66 hide : |r /sbmonitor hide")
+    print("|cff00cc66 resize : |r /sbmonitor resize 50 50")
+end
 
 local function MyAddonCommands(msg, editbox)
 
     local args = {};
-	for _, arg in ipairs({ string.split(' ', msg) }) do
-		if (#arg > 0) then
-			table.insert(args, arg);
-		end
+    for _, arg in ipairs({ string.split(' ', msg) }) do
+        if (#arg > 0) then
+            table.insert(args, arg);
+        end
     end
     if args[1] == nil then
-        print("|cff00cc66 [Single Buff Monitor] command examples: |r")
-        print("|cff00cc66 show : |r /sbmonitor show")
-        print("|cff00cc66 hide : |r /sbmonitor hide")
-        print("|cff00cc66 resize : |r /sbmonitor resize 50 50")
+        printCmdTips()
     elseif args[1] == "show" then
         BuffMonitorAddon.showAddon()
     elseif args[1] == "hide" then
@@ -49,10 +59,7 @@ local function MyAddonCommands(msg, editbox)
     elseif args[1] == "resize" then
         BuffMonitorAddon.resizeAddon(tonumber(args[2]), tonumber(args[3]))
     else
-        print("|cff00cc66 [Single Buff Monitor] command examples: |r")
-        print("|cff00cc66 show : |r /sbmonitor show")
-        print("|cff00cc66 hide : |r /sbmonitor hide")
-        print("|cff00cc66 resize : |r /sbmonitor resize 50 50")
+        printCmdTips()
     end
 end
 SLASH_BUFFMONITOR1 = '/sbmonitor'
@@ -66,6 +73,8 @@ function BuffMonitorAddon.resizeAddon(width, height)
     if (width ~= nil and width > 0) and (height ~= nil and height > 0)  then
         BuffMonitorAddon.frameWidth = width
         BuffMonitorAddon.frameHeight = height
+        SBMonitor_config.frameWidth = width
+        SBMonitor_config.frameHeight = height
     else
         BuffMonitorAddon.frameWidth = BuffMonitorAddon.defaultFrameWidth
         BuffMonitorAddon.frameHeight = BuffMonitorAddon.defaultFrameHeight
@@ -74,6 +83,7 @@ function BuffMonitorAddon.resizeAddon(width, height)
     BuffMonitorAddon.frame:SetHeight(BuffMonitorAddon.frameHeight)
     local newFontSize = (height/BuffMonitorAddon.defaultFrameHeight)*BuffMonitorAddon.stackCountDefaultFontSize
     BuffMonitorAddon.stackCountFontSize = newFontSize
+    SBMonitor_config.stackCountFontSize = newFontSize
 end
 function BuffMonitorAddon.showAddon()
     if BuffMonitorAddon.frame ~= nil then
@@ -90,13 +100,15 @@ local function initializeFrame()
     BuffMonitorAddon.frame = CreateFrame("Frame", "BuffmonitorFrame", UIParent)
     local frame = BuffMonitorAddon.frame
     local spell_name, _, spell_icon = GetSpellInfo(BuffMonitorAddon.spell_id)
+
     frame:SetWidth(BuffMonitorAddon.frameWidth)
     frame:SetHeight(BuffMonitorAddon.frameHeight)
-    frame:SetPoint("CENTER", 0, 0)  -- @@@@@@@@@@@@@@  read new position from config.
+    frame:SetPoint(BuffMonitorAddon.defaultAnchor, BuffMonitorAddon.defaultAnchorOX, BuffMonitorAddon.defaultAnchorOY)
+    frame:RegisterEvent("ADDON_LOADED");
     frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-    frame:SetScript("OnEvent",function(self,event,...)
+    frame:SetScript("OnEvent",function(self,event,arg1,...)
         if event=="PLAYER_ENTERING_WORLD" then
             -- print("entering the world") works after reload
             self:SetAlpha(0.5)
@@ -110,7 +122,33 @@ local function initializeFrame()
             -- print("leaving combat")
             self:SetAlpha(0.5)
             self.count:SetText("")
-            -- self.cooldown:Hide() no need to hide, as cooldown may still exist.
+            --self.cooldown:Hide() no need to hide as cooldown may still exist after fight
+        elseif event=="ADDON_LOADED" and arg1 =="SingleBuffMonitor" then
+            if SBMonitor_config == nil
+                or SBMonitor_config.targetToMonitor == nil
+                or SBMonitor_config.spell_id == nil then
+                SBMonitor_config = {}
+                SBMonitor_config.targetToMonitor = "pet"
+                SBMonitor_config.spell_id = 272790
+                SBMonitor_config.frameWidth = 50
+                SBMonitor_config.frameHeight = 50
+                SBMonitor_config.stackCountFontSize = 25
+                SBMonitor_config.anchor = "CENTER"
+                SBMonitor_config.anchorOX = 0
+                SBMonitor_config.anchorOY = 0
+            else
+                BuffMonitorAddon.targetToMonitor = SBMonitor_config.targetToMonitor
+                BuffMonitorAddon.spell_id = SBMonitor_config.spell_id  
+                BuffMonitorAddon.frameWidth = SBMonitor_config.frameWidth
+                BuffMonitorAddon.frameHeight = SBMonitor_config.frameHeight
+                BuffMonitorAddon.stackCountFontSize = SBMonitor_config.stackCountFontSize
+                BuffMonitorAddon.anchor = SBMonitor_config.anchor
+                BuffMonitorAddon.anchorOX = SBMonitor_config.anchorOX
+                BuffMonitorAddon.anchorOY = SBMonitor_config.anchorOY
+                self:SetWidth(BuffMonitorAddon.frameWidth)
+                self:SetHeight(BuffMonitorAddon.frameHeight)
+                self:SetPoint(BuffMonitorAddon.defaulAnchor, BuffMonitorAddon.anchorOX, BuffMonitorAddon.anchorOY)
+            end
         end
     end)
 
@@ -133,6 +171,7 @@ local function initializeFrame()
                     current_stack_count = bf_count
                     self.count:SetText(bf_count)
                     self.count:SetFont(BuffMonitorAddon.stackCountFont, BuffMonitorAddon.stackCountFontSize, "OUTLINE")
+                    self.icon:SetTexture(bf_icon)
                     if (bf_duration) then
                         if(bf_duration>0) then
                             if bf_count ~= current_stack_count then
@@ -188,11 +227,12 @@ local function initializeFrame()
     end)
     frame:SetScript("OnMouseUp", function(self,arg1)
         self:StopMovingOrSizing()
+        local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
+        SBMonitor_config.anchor = point
+        SBMonitor_config.anchorOX = xOffset
+        SBMonitor_config.anchorOY = yOffset
     end)
 end
 
 initializeFrame()
-print("Welcome to use |cff00cc66 [Single Buff Monitor] |r")
-print("|cff00cc66 show : |r /sbmonitor show")
-print("|cff00cc66 hide : |r /sbmonitor hide")
-print("|cff00cc66 resize : |r /sbmonitor resize 50 50")
+printCmdTips()

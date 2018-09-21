@@ -1,4 +1,6 @@
 ## Interface: 80100
 ## Title: Single Buff Monitor
 ## Author: Stephen Liang
+## SavedVariables: aPlaceHolder
+## SavedVariablesPerCharacter: SBMonitor_config
 core.lua
