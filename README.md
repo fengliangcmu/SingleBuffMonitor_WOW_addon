@@ -20,4 +20,4 @@ Adding **user variable saving** function so that position&size don't need to be 
 
 # Copy Right
 Single Buff Monitor, by default for hunter pet's frenzy buff.
-Copyright (c) 2018, stephen Liang, All rights reserved.
+Copyright (c) 2018, Stephen Liang, All rights reserved.
