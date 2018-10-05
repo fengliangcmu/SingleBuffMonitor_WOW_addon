@@ -1,6 +1,9 @@
 # SingleBuffMonitor_WOW_addon
 ## Supporting World of Warcraft Version 8.01
 
+## Screenshot
+![screenshot of the addon](https://github.com/fengliangcmu/SingleBuffMonitor_WOW_addon/blob/master/running_addon.png)
+
 ## Dev Version 1
 Only monitor **Hunter pet's frenzy buff** and shows cooldown and buff stacks.
 
